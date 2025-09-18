@@ -1,64 +1,113 @@
-README.md
+## README.md
+
+````markdown
 # PROYECTO_TAREA1_PIPELINES
 
-Este repositorio contiene un **script básico en Python**, un archivo `requirements.txt` con las dependencias necesarias y las instrucciones para crear un entorno virtual, correr el script en tu computadora y documentar los pasos.
+Este repositorio contiene la **Tarea 1**:
+
+- Script básico en Python  
+- Archivo `requirements.txt` con dependencias  
+- Entorno virtual (local)  
+- Pasos de ejecución en mi computadora  
+- Dockerfile para contenedor  
+- Ejecución con `docker build` y `docker run`  
+- Montaje de carpetas entre host y contenedor  
 
 ---
 
-## 1. Requisitos
+## 1. Ejecución local (Python)
 
-- Python 3.10+ instalado en tu máquina.
-- Git para clonar el repositorio (opcional si ya lo descargaste como ZIP).
-
----
-
-## 2. Clonar el repositorio
-
+### 1.1 Crear y activar entorno virtual
+**macOS / Linux:**
 ```bash
-git clone https://github.com/Ivano2021/PROYECTO_TAREA1_PIPELINES.git
-cd PROYECTO_TAREA1_PIPELINES
-
-3. Crear el entorno virtual
-macOS / Linux
 python3 -m venv venv
 source venv/bin/activate
-pip install -U pip
-pip install -r requirements.txt
+````
 
-Windows (PowerShell)
+**Windows (PowerShell):**
+
+```powershell
 py -m venv venv
 .\venv\Scripts\Activate.ps1
+```
+
+### 1.2 Instalar dependencias
+
+```bash
 pip install -U pip
 pip install -r requirements.txt
+```
 
-4. Ejecutar el script
-4.1 Usando datos sintéticos (sin CSV propio)
+### 1.3 Ejecutar el script
+
+Con datos sintéticos:
+
+```bash
 python src/script_basico.py
+```
 
+Con un CSV propio (ej: `data/mi_archivo.csv` con columnas `grupo, valor`):
 
-Esto va a:
-
-Imprimir estadísticas en la terminal.
-
-Crear el archivo outputs/estadisticas.csv.
-
-4.2 Usando un CSV propio
-
-Colocá tu archivo en la carpeta data/ (ejemplo: data/mi_archivo.csv).
-El CSV debe tener al menos estas columnas: grupo y valor.
-
-Corré:
-
+```bash
 python src/script_basico.py -i data/mi_archivo.csv -o outputs/estadisticas.csv
+```
 
-5. Resultados
+Esto genera el archivo `outputs/estadisticas.csv`.
 
-El script imprime estadísticas globales y por grupo en la terminal.
+---
 
-También guarda un archivo CSV con esos resultados en outputs/.
+## 2. Ejecución con Docker
 
-6. Notas
+### 2.1 Construir la imagen
 
-El archivo .gitignore evita subir el entorno virtual (venv/), la carpeta outputs/ y otros archivos temporales.
+Desde la raíz del repositorio:
 
-Si algo no funciona, asegurate de tener activado el entorno virtual antes de correr el script.
+```bash
+docker build -f docker/Dockerfile -t tarea1:latest .
+```
+
+### 2.2 Ejecutar el contenedor
+
+Con datos sintéticos:
+
+```bash
+docker run --rm tarea1:latest python src/script_basico.py
+```
+
+Con un CSV propio y guardando salida en mi máquina:
+
+```bash
+mkdir -p data outputs
+docker run --rm \
+  -v "$PWD/data:/app/data" \
+  -v "$PWD/outputs:/app/outputs" \
+  tarea1:latest \
+  python src/script_basico.py -i data/mi_archivo.csv -o outputs/estadisticas.csv
+```
+
+En Windows (PowerShell):
+
+```powershell
+mkdir data; mkdir outputs
+docker run --rm `
+  -v "${PWD}\data:/app/data" `
+  -v "${PWD}\outputs:/app/outputs" `
+  tarea1:latest `
+  python src/script_basico.py -i data/mi_archivo.csv -o outputs/estadisticas.csv
+```
+
+---
+
+## 3. Resultados
+
+* El script imprime estadísticas **globales** y **por grupo** en la terminal.
+* También guarda un archivo CSV en `outputs/estadisticas.csv`.
+
+---
+
+## 4. Notas
+
+* `.gitignore` evita subir `venv/`, `outputs/` y archivos temporales.
+* `.dockerignore` evita copiar contenido innecesario al contenedor.
+
+
