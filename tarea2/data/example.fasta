@@ -1,0 +1,8 @@
+>seq1 [type:16S]
+ACGTACGTACGT
+>seq2 [type:18S]
+ACGTACGT
+>seq3 [type:16S]
+ACGT
+>seq4 [type:ITS]
+ACGTAC
