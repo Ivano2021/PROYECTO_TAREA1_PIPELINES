@@ -117,5 +117,3 @@ workflow {
   COUNT_SEQ_TYPE( FASTA )
   SEQ_STATS_LONG( FASTA )
 }
-
-
