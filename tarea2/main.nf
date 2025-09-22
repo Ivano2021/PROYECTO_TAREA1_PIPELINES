@@ -69,7 +69,10 @@ process SEQ_STATS_LONG {
       if (id!=\"\") {
         len=length(seq)
         gc=0
-        for(i=1;i<=len;i++){ b=toupper(substr(seq,i,1)); if(b==\"G\" || b==\"C\") gc++ }
+        for(i=1;i<=len;i++){
+          b=toupper(substr(seq,i,1));
+          if(b==\"G\" || b==\"C\") gc++
+        }
         gcperc=(len>0)? (100.0*gc/len):0
         printf \"%s\\t%d\\t%.3f\\n\", id, len, gcperc
       }
@@ -81,7 +84,10 @@ process SEQ_STATS_LONG {
       if (id!=\"\") {
         len=length(seq)
         gc=0
-        for(i=1;i<=len;i++){ b=toupper(substr(seq,i,1)); if(b==\"G\" || b==\"C\") gc++ }
+        for(i=1;i<=len;i++){
+          b=toupper(substr(seq,i,1));
+          if(b==\"G\" || b==\"C\") gc++
+        }
         gcperc=(len>0)? (100.0*gc/len):0
         printf \"%s\\t%d\\t%.3f\\n\", id, len, gcperc
       }
@@ -111,4 +117,5 @@ workflow {
   COUNT_SEQ_TYPE( FASTA )
   SEQ_STATS_LONG( FASTA )
 }
+
 
