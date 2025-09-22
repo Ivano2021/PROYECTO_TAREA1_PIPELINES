@@ -1,0 +1,7 @@
+.work/
+.nextflow*
+results/
+reports/
+timeline.html
+trace.txt
+flowchart.png
