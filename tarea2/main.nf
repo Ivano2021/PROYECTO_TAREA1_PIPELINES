@@ -1,28 +1,24 @@
 /*
  * Tarea 2 - Nextflow (bash)
  * - Contar líneas de un .txt (COUNT_LINES)
- * - Contar secuencias de tipo X en FASTA buscando [type:X] en el header (COUNT_SEQ_TYPE)
+ * - Contar secuencias de tipo X en FASTA [type:X] (COUNT_SEQ_TYPE)
  * - Proceso extra: longitud y GC% por secuencia (SEQ_STATS_LONG)
  * Perfiles: -profile local / -profile docker
  */
 nextflow.enable.dsl = 2
 
-// ===== Inicialización de parámetros SIN warnings =====
+// ===== Defaults sin warnings =====
 if( !params.txt )    params.txt    = 'data/example.txt'
 if( !params.fasta )  params.fasta  = 'data/example.fasta'
 if( !params.type )   params.type   = '16S'
 if( !params.outdir ) params.outdir = 'results'
 
-// ===== Canales de entrada (¡canales reales!) =====
-TEXT_FILE  = Channel.value( file(params.txt) )
-FASTA_FILE = Channel.value( file(params.fasta) )
-
-// ---------- PROCESO 1: contar líneas de un .txt ----------
+// ---------- PROCESO 1: contar líneas ----------
 process COUNT_LINES {
   publishDir params.outdir, mode: 'copy', overwrite: true
 
   input:
-  path txt from TEXT_FILE
+  path txt
 
   output:
   path "line_count.txt"
@@ -35,12 +31,12 @@ process COUNT_LINES {
   """
 }
 
-// ---------- PROCESO 2: contar secuencias de tipo X en FASTA ----------
+// ---------- PROCESO 2: contar secuencias de tipo X ----------
 process COUNT_SEQ_TYPE {
   publishDir params.outdir, mode: 'copy', overwrite: true
 
   input:
-  path fa from FASTA_FILE
+  path fa
 
   output:
   path "seq_type_count.txt"
@@ -59,7 +55,7 @@ process SEQ_STATS_LONG {
   publishDir params.outdir, mode: 'copy', overwrite: true
 
   input:
-  path fa from FASTA_FILE
+  path fa
 
   output:
   path "seq_lengths_gc.tsv"
@@ -106,9 +102,13 @@ process SEQ_STATS_LONG {
   """
 }
 
-// ---------- WORKFLOW ----------
+// ---------- WORKFLOW: crear canales y pasarlos por posición ----------
 workflow {
-  COUNT_LINES(TEXT_FILE)
-  COUNT_SEQ_TYPE(FASTA_FILE)
-  SEQ_STATS_LONG(FASTA_FILE)
+  TXT   = Channel.value( file(params.txt) )
+  FASTA = Channel.value( file(params.fasta) )
+
+  COUNT_LINES( TXT )
+  COUNT_SEQ_TYPE( FASTA )
+  SEQ_STATS_LONG( FASTA )
 }
+
