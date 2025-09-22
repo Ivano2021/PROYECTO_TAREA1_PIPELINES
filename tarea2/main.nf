@@ -7,15 +7,15 @@
  */
 nextflow.enable.dsl = 2
 
-// Defaults (se pueden overridear por CLI)
-params.txt    = 'data/example.txt'
-params.fasta  = 'data/example.fasta'
-params.type   = '16S'
-params.outdir = 'results'
+// ===== Inicialización de parámetros SIN warnings =====
+if( !params.txt )    params.txt    = 'data/example.txt'
+if( !params.fasta )  params.fasta  = 'data/example.fasta'
+if( !params.type )   params.type   = '16S'
+if( !params.outdir ) params.outdir = 'results'
 
-// Canales de entrada (nombres simples, sin .set{})
-TEXT_FILE  = Channel.fromPath(params.txt)
-FASTA_FILE = Channel.fromPath(params.fasta)
+// ===== Canales de entrada (¡canales reales!) =====
+TEXT_FILE  = Channel.value( file(params.txt) )
+FASTA_FILE = Channel.value( file(params.fasta) )
 
 // ---------- PROCESO 1: contar líneas de un .txt ----------
 process COUNT_LINES {
@@ -48,4 +48,67 @@ process COUNT_SEQ_TYPE {
   script:
   """
   echo "FASTA: ${fa}" > seq_type_count.txt
-  echo "Tipo buscado: ${params.type}" >> seq_type_count.
+  echo "Tipo buscado: ${params.type}" >> seq_type_count.txt
+  COUNT=\$(grep -c '^>.*\\[type:${params.type}\\]' "${fa}" || true)
+  echo "Secuencias de tipo ${params.type}: \$COUNT" >> seq_type_count.txt
+  """
+}
+
+// ---------- PROCESO 3: longitud y GC% por secuencia ----------
+process SEQ_STATS_LONG {
+  publishDir params.outdir, mode: 'copy', overwrite: true
+
+  input:
+  path fa from FASTA_FILE
+
+  output:
+  path "seq_lengths_gc.tsv"
+  path "seq_lengths_gc_summary.txt"
+
+  script:
+  """
+  awk '
+    BEGIN{FS=\"\"; id=\"\"; seq=\"\"}
+    /^>/{
+      if (id!=\"\") {
+        len=length(seq)
+        gc=0
+        for(i=1;i<=len;i++){ b=toupper(substr(seq,i,1)); if(b==\"G\" || b==\"C\") gc++ }
+        gcperc=(len>0)? (100.0*gc/len):0
+        printf \"%s\\t%d\\t%.3f\\n\", id, len, gcperc
+      }
+      id=\$0; gsub(/^>/,\"\",id); seq=\"\"
+      next
+    }
+    !/^>/{ seq=seq \$0 }
+    END{
+      if (id!=\"\") {
+        len=length(seq)
+        gc=0
+        for(i=1;i<=len;i++){ b=toupper(substr(seq,i,1)); if(b==\"G\" || b==\"C\") gc++ }
+        gcperc=(len>0)? (100.0*gc/len):0
+        printf \"%s\\t%d\\t%.3f\\n\", id, len, gcperc
+      }
+    }
+  ' "${fa}" > seq_lengths_gc.tsv
+
+  awk '
+    BEGIN{n=0; sumlen=0; sumgc=0}
+    { n++; sumlen+=\$2; sumgc+=\$3 }
+    END{
+      if(n>0){
+        printf \"Secuencias: %d\\nLongitud media: %.2f\\nGC%% medio: %.2f\\n\", n, (sumlen/n), (sumgc/n)
+      } else {
+        print \"Secuencias: 0\\nLongitud media: NA\\nGC% medio: NA\"
+      }
+    }
+  ' seq_lengths_gc.tsv > seq_lengths_gc_summary.txt
+  """
+}
+
+// ---------- WORKFLOW ----------
+workflow {
+  COUNT_LINES(TEXT_FILE)
+  COUNT_SEQ_TYPE(FASTA_FILE)
+  SEQ_STATS_LONG(FASTA_FILE)
+}
