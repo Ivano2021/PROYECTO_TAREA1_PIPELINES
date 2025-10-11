@@ -13,6 +13,7 @@ if( !params.fasta )  params.fasta  = 'data/example.fasta'
 if( !params.type )   params.type   = '16S'
 if( !params.outdir ) params.outdir = 'results'
 
+
 // ---------- PROCESO 1: contar líneas ----------
 process COUNT_LINES {
   publishDir params.outdir, mode: 'copy', overwrite: true
